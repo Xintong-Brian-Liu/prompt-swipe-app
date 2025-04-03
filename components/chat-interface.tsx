@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { useTranslation } from "@/lib/use-translation"
 
 interface Message {
   role: "user" | "assistant"
@@ -21,6 +22,7 @@ export default function ChatInterface({ initialPrompt, onClose }: ChatInterfaceP
   ])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const t = useTranslation()
 
   // Automatically send initial prompt to AI when component mounts
   useEffect(() => {
@@ -39,7 +41,7 @@ export default function ChatInterface({ initialPrompt, onClose }: ChatInterfaceP
         });
         
         if (!response.ok) {
-          throw new Error('Failed to generate with DeepSeek');
+          throw new Error(t.errorGeneratingText);
         }
         
         const data = await response.json();
@@ -52,7 +54,7 @@ export default function ChatInterface({ initialPrompt, onClose }: ChatInterfaceP
     }
 
     sendInitialPrompt();
-  }, []); // Empty dependency array means this runs once when component mounts
+  }, []);
 
   const handleSendMessage = async () => {
     if (!input.trim() || isLoading) return
@@ -75,7 +77,7 @@ export default function ChatInterface({ initialPrompt, onClose }: ChatInterfaceP
       });
       
       if (!response.ok) {
-        throw new Error('Failed to generate with DeepSeek');
+        throw new Error(t.errorSendingMessage);
       }
       
       const data = await response.json();
@@ -91,9 +93,9 @@ export default function ChatInterface({ initialPrompt, onClose }: ChatInterfaceP
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl bg-gray-900 rounded-lg overflow-hidden">
         <div className="p-4 border-b border-gray-800 flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-white">Chat with DeepSeek</h2>
+          <h2 className="text-xl font-semibold text-white">{t.chatWithDeepSeek}</h2>
           <Button variant="ghost" onClick={onClose} className="text-white hover:bg-gray-800">
-            Close
+            {t.close}
           </Button>
         </div>
         
@@ -135,7 +137,7 @@ export default function ChatInterface({ initialPrompt, onClose }: ChatInterfaceP
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-              placeholder="Type your message..."
+              placeholder={t.typeMessage}
               className="flex-1 bg-gray-800 text-white border-gray-700"
             />
             <Button
@@ -143,7 +145,7 @@ export default function ChatInterface({ initialPrompt, onClose }: ChatInterfaceP
               disabled={isLoading || !input.trim()}
               className="bg-blue-600 hover:bg-blue-700"
             >
-              Send
+              {t.send}
             </Button>
           </div>
         </div>

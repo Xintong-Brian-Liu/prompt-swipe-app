@@ -3,6 +3,14 @@ import { generateWithDeepseek } from '@/lib/together-ai';
 
 export async function POST(req: NextRequest) {
   try {
+    // Check if API key is configured
+    if (!process.env.TOGETHER_API_KEY) {
+      return NextResponse.json(
+        { error: 'Together AI API key is not configured' },
+        { status: 500 }
+      );
+    }
+
     const { prompt, conversation } = await req.json();
 
     if (!prompt || typeof prompt !== 'string') {
@@ -22,8 +30,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ response });
   } catch (error) {
     console.error('Error in AI generate API:', error);
+    
+    // Return a more specific error message
+    const errorMessage = error instanceof Error ? error.message : 'Failed to generate text';
     return NextResponse.json(
-      { error: 'Failed to generate text' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

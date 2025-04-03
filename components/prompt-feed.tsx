@@ -5,12 +5,13 @@ import { motion, type PanInfo, useAnimation } from "framer-motion"
 import PromptCard from "@/components/prompt-card"
 import { useToast } from "@/hooks/use-toast"
 import ChatInterface from "@/components/chat-interface"
+import { useTranslation } from "@/lib/use-translation"
 
 // Sample data - in a real app this would come from an API
 const SAMPLE_PROMPTS = [
   {
     id: 1,
-    text: "Create a story about a detective who can talk to animals",
+    text: "prompts.sample1",
     author: "CreativeWriter",
     likes: 1243,
     comments: 89,
@@ -18,7 +19,7 @@ const SAMPLE_PROMPTS = [
   },
   {
     id: 2,
-    text: "Design a futuristic city where nature and technology are perfectly balanced",
+    text: "prompts.sample2",
     author: "FutureThinker",
     likes: 2567,
     comments: 134,
@@ -26,7 +27,7 @@ const SAMPLE_PROMPTS = [
   },
   {
     id: 3,
-    text: "Write a poem about the feeling of discovering something new",
+    text: "prompts.sample3",
     author: "PoetryLover",
     likes: 987,
     comments: 45,
@@ -34,7 +35,7 @@ const SAMPLE_PROMPTS = [
   },
   {
     id: 4,
-    text: "Describe a world where humans can photosynthesize like plants",
+    text: "prompts.sample4",
     author: "SciFiCreator",
     likes: 1876,
     comments: 112,
@@ -42,7 +43,7 @@ const SAMPLE_PROMPTS = [
   },
   {
     id: 5,
-    text: "Create a character who can manipulate time but only for 10 seconds",
+    text: "prompts.sample5",
     author: "StoryMaster",
     likes: 3421,
     comments: 201,
@@ -58,6 +59,7 @@ export default function PromptFeed() {
   const controls = useAnimation()
   const constraintsRef = useRef(null)
   const { toast } = useToast()
+  const t = useTranslation()
 
   const handleDragEnd = async (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     const threshold = 100
@@ -90,8 +92,8 @@ export default function PromptFeed() {
       setCurrentIndex(0)
       controls.start({ x: 0, opacity: 1 })
       toast({
-        title: "You've seen all prompts",
-        description: "Starting from the beginning again",
+        title: t.allPromptsSeen,
+        description: t.allPromptsSeenDescription,
       })
     }
   }
@@ -105,8 +107,8 @@ export default function PromptFeed() {
       setCurrentIndex(SAMPLE_PROMPTS.length - 1)
       controls.start({ x: 0, y: 0, opacity: 1 })
       toast({
-        title: "First prompt reached",
-        description: "Going to the last prompt",
+        title: t.firstPromptReached,
+        description: t.firstPromptReachedDescription,
       })
     }
   }
@@ -119,27 +121,30 @@ export default function PromptFeed() {
     if (!likedPrompts.includes(promptId)) {
       setLikedPrompts([...likedPrompts, promptId])
       toast({
-        title: "Prompt liked!",
-        description: "This prompt has been added to your favorites",
+        title: t.promptLiked,
+        description: t.promptLikedDescription,
       })
     }
   }
 
   const handleComment = () => {
     toast({
-      title: "Comments",
-      description: "Comment functionality would open here",
+      title: t.commentsTitle,
+      description: t.commentsDescription,
     })
   }
 
   const handleShare = () => {
     toast({
-      title: "Share",
-      description: "Sharing options would appear here",
+      title: t.shareTitle,
+      description: t.shareDescription,
     })
   }
 
-  const currentPrompt = SAMPLE_PROMPTS[currentIndex]
+  const currentPrompt = {
+    ...SAMPLE_PROMPTS[currentIndex],
+    text: t.prompts[SAMPLE_PROMPTS[currentIndex].text.replace('prompts.', '') as keyof typeof t.prompts]
+  }
   const isLiked = likedPrompts.includes(currentPrompt.id)
 
   return (
@@ -149,7 +154,7 @@ export default function PromptFeed() {
     >
       {showChat && (
         <ChatInterface
-          initialPrompt={SAMPLE_PROMPTS[currentIndex].text}
+          initialPrompt={currentPrompt.text}
           onClose={() => setShowChat(false)}
         />
       )}
@@ -173,7 +178,7 @@ export default function PromptFeed() {
       </motion.div>
 
       <div className="text-white text-xs mt-4 opacity-50">
-        Swipe up/down to navigate • Double-click to like • Swipe right to chat with DeepSeek
+        {t.swipeInstructions}
       </div>
       
       {isLoading && (
