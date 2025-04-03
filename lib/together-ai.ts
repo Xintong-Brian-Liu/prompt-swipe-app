@@ -8,12 +8,17 @@ export const togetherClient = new Together({
 // DeepSeek model ID
 export const DEEPSEEK_MODEL_ID = 'deepseek-ai/DeepSeek-V3';
 
+type Message = {
+  role: 'user' | 'assistant' | 'system' | 'tool';
+  content: string;
+};
+
 // Function to generate text from DeepSeek model
-export async function generateWithDeepseek(prompt: string) {
+export async function generateWithDeepseek(prompt: string, messages?: Message[]) {
   try {
     const response = await togetherClient.chat.completions.create({
       model: DEEPSEEK_MODEL_ID,
-      messages: [{ role: 'user', content: prompt }],
+      messages: messages || [{ role: 'user', content: prompt }],
       max_tokens: 1024,
       temperature: 0.7,
     });

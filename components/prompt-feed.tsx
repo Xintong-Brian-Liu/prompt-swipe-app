@@ -4,6 +4,7 @@ import { useState, useRef } from "react"
 import { motion, type PanInfo, useAnimation } from "framer-motion"
 import PromptCard from "@/components/prompt-card"
 import { useToast } from "@/hooks/use-toast"
+import ChatInterface from "@/components/chat-interface"
 
 // Sample data - in a real app this would come from an API
 const SAMPLE_PROMPTS = [
@@ -53,7 +54,7 @@ export default function PromptFeed() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [likedPrompts, setLikedPrompts] = useState<number[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [generatedResponse, setGeneratedResponse] = useState<string | null>(null)
+  const [showChat, setShowChat] = useState(false)
   const controls = useAnimation()
   const constraintsRef = useRef(null)
   const { toast } = useToast()
@@ -70,9 +71,9 @@ export default function PromptFeed() {
       await controls.start({ y: "-100%", opacity: 0 })
       previousPrompt()
     } else if (info.offset.x > threshold) {
-      // Swiped right - apply to deepseek
+      // Swiped right - show chat interface
       await controls.start({ x: "100%", opacity: 0 })
-      applyToDeepseek(SAMPLE_PROMPTS[currentIndex].text)
+      setShowChat(true)
       controls.start({ x: 0, y: 0, opacity: 1 })
     } else {
       // Return to center if not swiped far enough
@@ -107,42 +108,6 @@ export default function PromptFeed() {
         title: "First prompt reached",
         description: "Going to the last prompt",
       })
-    }
-  }
-
-  const applyToDeepseek = async (promptText: string) => {
-    setIsLoading(true)
-    setGeneratedResponse(null)
-    
-    try {
-      const response = await fetch('/api/ai/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ prompt: promptText }),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to generate with DeepSeek');
-      }
-      
-      const data = await response.json();
-      setGeneratedResponse(data.response);
-      
-      toast({
-        title: "Generated with DeepSeek",
-        description: "Prompt successfully processed by DeepSeek model",
-      });
-    } catch (error) {
-      console.error('Error applying prompt to DeepSeek:', error);
-      toast({
-        title: "Error",
-        description: "Failed to process prompt with DeepSeek model",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
     }
   }
 
@@ -182,18 +147,12 @@ export default function PromptFeed() {
       className="w-full h-screen flex flex-col items-center justify-center bg-black overflow-hidden"
       ref={constraintsRef}
     >
-      {generatedResponse ? (
-        <div className="w-full max-w-md bg-gray-800 p-6 rounded-lg text-white mb-4 overflow-auto max-h-[40vh]">
-          <h3 className="text-xl font-bold mb-2">DeepSeek Response:</h3>
-          <p className="whitespace-pre-wrap">{generatedResponse}</p>
-          <button 
-            onClick={() => setGeneratedResponse(null)}
-            className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-          >
-            Dismiss
-          </button>
-        </div>
-      ) : null}
+      {showChat && (
+        <ChatInterface
+          initialPrompt={SAMPLE_PROMPTS[currentIndex].text}
+          onClose={() => setShowChat(false)}
+        />
+      )}
       
       <motion.div
         drag={true}
@@ -214,7 +173,7 @@ export default function PromptFeed() {
       </motion.div>
 
       <div className="text-white text-xs mt-4 opacity-50">
-        Swipe up/down to navigate • Double-click to like • Swipe right to apply to DeepSeek
+        Swipe up/down to navigate • Double-click to like • Swipe right to chat with DeepSeek
       </div>
       
       {isLoading && (

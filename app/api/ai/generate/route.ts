@@ -3,7 +3,7 @@ import { generateWithDeepseek } from '@/lib/together-ai';
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt } = await req.json();
+    const { prompt, conversation } = await req.json();
 
     if (!prompt || typeof prompt !== 'string') {
       return NextResponse.json(
@@ -12,7 +12,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const response = await generateWithDeepseek(prompt);
+    // If conversation history is provided, use it to maintain context
+    const messages = conversation 
+      ? [...conversation, { role: 'user', content: prompt }]
+      : [{ role: 'user', content: prompt }];
+
+    const response = await generateWithDeepseek(prompt, messages);
 
     return NextResponse.json({ response });
   } catch (error) {
