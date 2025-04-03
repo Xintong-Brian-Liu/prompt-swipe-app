@@ -52,6 +52,8 @@ const SAMPLE_PROMPTS = [
 export default function PromptFeed() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [likedPrompts, setLikedPrompts] = useState<number[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [generatedResponse, setGeneratedResponse] = useState<string | null>(null)
   const controls = useAnimation()
   const constraintsRef = useRef(null)
   const { toast } = useToast()
@@ -108,13 +110,40 @@ export default function PromptFeed() {
     }
   }
 
-  const applyToDeepseek = (promptText: string) => {
-    toast({
-      title: "Applied to Deepseek",
-      description: "Prompt sent to Deepseek model",
-    })
-    // In a real app, this would send the prompt to the Deepseek API
-    console.log("Applying prompt to Deepseek:", promptText)
+  const applyToDeepseek = async (promptText: string) => {
+    setIsLoading(true)
+    setGeneratedResponse(null)
+    
+    try {
+      const response = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt: promptText }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate with DeepSeek');
+      }
+      
+      const data = await response.json();
+      setGeneratedResponse(data.response);
+      
+      toast({
+        title: "Generated with DeepSeek",
+        description: "Prompt successfully processed by DeepSeek model",
+      });
+    } catch (error) {
+      console.error('Error applying prompt to DeepSeek:', error);
+      toast({
+        title: "Error",
+        description: "Failed to process prompt with DeepSeek model",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   const handleDoubleClick = () => {
@@ -153,6 +182,19 @@ export default function PromptFeed() {
       className="w-full h-screen flex flex-col items-center justify-center bg-black overflow-hidden"
       ref={constraintsRef}
     >
+      {generatedResponse ? (
+        <div className="w-full max-w-md bg-gray-800 p-6 rounded-lg text-white mb-4 overflow-auto max-h-[40vh]">
+          <h3 className="text-xl font-bold mb-2">DeepSeek Response:</h3>
+          <p className="whitespace-pre-wrap">{generatedResponse}</p>
+          <button 
+            onClick={() => setGeneratedResponse(null)}
+            className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+          >
+            Dismiss
+          </button>
+        </div>
+      ) : null}
+      
       <motion.div
         drag={true}
         dragConstraints={constraintsRef}
@@ -172,8 +214,14 @@ export default function PromptFeed() {
       </motion.div>
 
       <div className="text-white text-xs mt-4 opacity-50">
-        Swipe up/down to navigate • Double-click to like • Swipe right to apply to Deepseek
+        Swipe up/down to navigate • Double-click to like • Swipe right to apply to DeepSeek
       </div>
+      
+      {isLoading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+        </div>
+      )}
     </div>
   )
 }
