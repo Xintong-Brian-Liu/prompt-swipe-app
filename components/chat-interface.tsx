@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useTranslation } from "@/lib/use-translation"
+import { useToast } from "@/hooks/use-toast"
 
 interface Message {
   role: "user" | "assistant"
@@ -23,6 +24,7 @@ export default function ChatInterface({ initialPrompt, onClose }: ChatInterfaceP
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const t = useTranslation()
+  const { toast } = useToast()
 
   // Automatically send initial prompt to AI when component mounts
   useEffect(() => {
@@ -40,14 +42,20 @@ export default function ChatInterface({ initialPrompt, onClose }: ChatInterfaceP
           }),
         });
         
+        const data = await response.json();
+        
         if (!response.ok) {
-          throw new Error(t.errorGeneratingText);
+          throw new Error(data.error || t.errorGeneratingText);
         }
         
-        const data = await response.json();
         setMessages(prev => [...prev, { role: "assistant", content: data.response }]);
       } catch (error) {
         console.error('Error sending initial prompt:', error);
+        toast({
+          title: t.errorGeneratingText,
+          description: error instanceof Error ? error.message : t.errorGeneratingText,
+          variant: "destructive"
+        });
       } finally {
         setIsLoading(false);
       }
@@ -76,14 +84,20 @@ export default function ChatInterface({ initialPrompt, onClose }: ChatInterfaceP
         }),
       });
       
+      const data = await response.json();
+      
       if (!response.ok) {
-        throw new Error(t.errorSendingMessage);
+        throw new Error(data.error || t.errorSendingMessage);
       }
       
-      const data = await response.json();
       setMessages(prev => [...prev, { role: "assistant", content: data.response }]);
     } catch (error) {
       console.error('Error sending message:', error);
+      toast({
+        title: t.errorSendingMessage,
+        description: error instanceof Error ? error.message : t.errorSendingMessage,
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
